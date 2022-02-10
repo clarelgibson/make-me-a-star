@@ -1,0 +1,50 @@
+---
+title: "Make Me A Star"
+subtitle: "US Manufactures"
+author: "Clare Gibson"
+date: "`r Sys.Date()`"
+output: 
+  html_document:
+    toc: true
+    number_sections: true
+    toc_float: true
+    theme: cosmo
+    code_folding: show
+---
+
+```{r setup, include=FALSE}
+# Load packages
+library(knitr)
+
+# Knitr Options
+opts_chunk$set(
+	echo = TRUE,
+	message = FALSE,
+	warning = FALSE,
+	fig.align = 'center'
+)
+```
+
+# Packages
+The following packages are used in this notebook: `tidyverse`, `lubridate`.
+```{r load-packages}
+library(tidyverse)      # for general wrangling
+library(lubridate)      # for date wrangling
+```
+
+# The Dataset
+The dataset I will be using for this example comes from the [United States Census Bureau](https://www.census.gov/) and summarizes [survey data](https://data.census.gov/cedsci/table?q=AM1831BASIC&tid=ASMAREA2017.AM1831BASIC01&hidePreview=true) asked of manufacturing firms in 2018 and 2019. It contains a variety of measures concerning payroll and numbers of employees for several industries according to the North American Industry Classification System (or [NAICS](https://www.census.gov/naics/)). In the course of this project, I will extend this dataset with geography, time, and other dimension tables.
+
+# Loading the Data
+I will start by loading the NAICS manufacturing dataset.
+```{r load-manufacturing-data}
+# Read the manufacturing data into a df
+manu <- read_csv("data-in/manufacturing_data.csv")
+
+# Display the head
+manu %>% 
+  head(5) %>% 
+  kable(align = "l",
+        caption = "Head of the manufacturing dataset")
+```
+
