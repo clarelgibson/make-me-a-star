@@ -26,11 +26,15 @@ opts_chunk$set(
 ```
 
 # Packages
-The following packages are used in this notebook: `tidyverse`, `lubridate`.
+The following packages are used in this notebook:
 ```{r load-packages}
 library(tidyverse)      # for general wrangling
 library(lubridate)      # for date wrangling
+library(janitor)        # for cleaning column headers
 ```
+
+# Objectives
+The aim of this project is to take source data relating to US manufacturing in 2018 and 2019 and use the dimensional modeling techniques described in [The Data Warehouse Toolkit](https://www.kimballgroup.com/data-warehouse-business-intelligence-resources/books/data-warehouse-dw-toolkit/) (2013, Ralph Kimball and Margy Ross) to transform this source data into a reliable data model for business intelligence usage.
 
 # The Dataset
 The dataset I will be using for this example comes from the [United States Census Bureau](https://www.census.gov/) and summarizes [survey data](https://data.census.gov/cedsci/table?q=AM1831BASIC&tid=ASMAREA2017.AM1831BASIC01&hidePreview=true) asked of manufacturing firms in 2018 and 2019. It contains a variety of measures concerning payroll and numbers of employees for several industries according to the North American Industry Classification System (or [NAICS](https://www.census.gov/naics/)). In the course of this project, I will extend this dataset with geography, time, and other dimension tables.
@@ -38,13 +42,57 @@ The dataset I will be using for this example comes from the [United States Censu
 # Loading the Data
 I will start by loading the NAICS manufacturing dataset.
 ```{r load-manufacturing-data}
-# Read the manufacturing data into a df
-manu <- read_csv("data-in/manufacturing_data.csv")
+# Read the raw manufacturing data into a df
+raw <- read_csv("data-in/manufacturing_data.csv")
 
 # Display the head
-manu %>% 
+raw %>% 
   head(5) %>% 
   kable(align = "l",
         caption = "Head of the manufacturing dataset")
 ```
 
+The first thing I notice is that the first row contains alternative, longer-form headers. I will choose to work with these longer-form headers, so I will read the data in again, but this time skipping the first row. I will also run the `janitor::clean_names()` function over the headers to make them cleaner for working with in R.
+
+```{r reload-manufacturing-data}
+# Read the raw manufacturing data into a df
+raw <- read_csv("data-in/manufacturing_data.csv",
+                skip=1) %>% 
+  clean_names()
+
+# Display the head
+raw %>% 
+  head(5) %>% 
+  kable(align = "l",
+        caption = "Head of the manufacturing dataset")
+```
+
+# Inspecting the Data
+I will review each column in the raw data to get a sense of what is contains and how I might be able to build a model from it. I appreicate that this method of reviewing the data to determine a model is somewhat contrary to the Kimball techniques, which advise that I should determine the business requirements first and then obtain the data to match the requirements. However, in this case, I have no business users to consult and the model will be built according to my own analysis of the available data.
+
+## `id`
+```{r id-head}
+# Show the head of the id column
+raw$id %>% 
+  glimpse()
+```
+
+This is a character column and the first 4 values are duplicates. What are the total values and value counts in this column?
+```{r id-table}
+# Show the value counts for id
+table(raw$id)
+```
+
+There are 4 values with around 200 records for each. By looking back at the source website, I discovered that `id` refers to the *geographic identifier code*, so I will rename this column to be more descriptive. Now that I am starting to manipulate the raw data, I will save this into a new variable `df`.
+```{r id-rename}
+# rename the id column
+df <- raw %>% 
+  rename(geographic_area_id = id)
+```
+
+## `geographic_area_name`
+```{r id-geo-area-name}
+# Show the head of the geographic_area_name column
+df$geographic_area_name %>% 
+  glimpse()
+```

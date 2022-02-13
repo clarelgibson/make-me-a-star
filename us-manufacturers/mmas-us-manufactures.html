@@ -11,7 +11,7 @@
 
 <meta name="author" content="Clare Gibson" />
 
-<meta name="date" content="2022-02-10" />
+<meta name="date" content="2022-02-13" />
 
 <title>Make Me A Star</title>
 
@@ -256,29 +256,34 @@ div.tocify {
 <h1 class="title toc-ignore">Make Me A Star</h1>
 <h3 class="subtitle">US Manufactures</h3>
 <h4 class="author">Clare Gibson</h4>
-<h4 class="date">2022-02-10</h4>
+<h4 class="date">2022-02-13</h4>
 
 </div>
 
 
 <div id="packages" class="section level1" number="1">
 <h1 number="1"><span class="header-section-number">1</span> Packages</h1>
-<p>The following packages are used in this notebook: <code>tidyverse</code>, <code>lubridate</code>.</p>
+<p>The following packages are used in this notebook:</p>
 <pre class="r"><code>library(tidyverse)      # for general wrangling
-library(lubridate)      # for date wrangling</code></pre>
+library(lubridate)      # for date wrangling
+library(janitor)        # for cleaning column headers</code></pre>
 </div>
-<div id="the-dataset" class="section level1" number="2">
-<h1 number="2"><span class="header-section-number">2</span> The Dataset</h1>
+<div id="objectives" class="section level1" number="2">
+<h1 number="2"><span class="header-section-number">2</span> Objectives</h1>
+<p>The aim of this project is to take source data relating to US manufacturing in 2018 and 2019 and use the dimensional modeling techniques described in <a href="https://www.kimballgroup.com/data-warehouse-business-intelligence-resources/books/data-warehouse-dw-toolkit/">The Data Warehouse Toolkit</a> (2013, Ralph Kimball and Margy Ross) to transform this source data into a reliable data model for business intelligence usage.</p>
+</div>
+<div id="the-dataset" class="section level1" number="3">
+<h1 number="3"><span class="header-section-number">3</span> The Dataset</h1>
 <p>The dataset I will be using for this example comes from the <a href="https://www.census.gov/">United States Census Bureau</a> and summarizes <a href="https://data.census.gov/cedsci/table?q=AM1831BASIC&amp;tid=ASMAREA2017.AM1831BASIC01&amp;hidePreview=true">survey data</a> asked of manufacturing firms in 2018 and 2019. It contains a variety of measures concerning payroll and numbers of employees for several industries according to the North American Industry Classification System (or <a href="https://www.census.gov/naics/">NAICS</a>). In the course of this project, I will extend this dataset with geography, time, and other dimension tables.</p>
 </div>
-<div id="loading-the-data" class="section level1" number="3">
-<h1 number="3"><span class="header-section-number">3</span> Loading the Data</h1>
+<div id="loading-the-data" class="section level1" number="4">
+<h1 number="4"><span class="header-section-number">4</span> Loading the Data</h1>
 <p>I will start by loading the NAICS manufacturing dataset.</p>
-<pre class="r"><code># Read the manufacturing data into a df
-manu &lt;- read_csv(&quot;data-in/manufacturing_data.csv&quot;)
+<pre class="r"><code># Read the raw manufacturing data into a df
+raw &lt;- read_csv(&quot;data-in/manufacturing_data.csv&quot;)
 
 # Display the head
-manu %&gt;% 
+raw %&gt;% 
   head(5) %&gt;% 
   kable(align = &quot;l&quot;,
         caption = &quot;Head of the manufacturing dataset&quot;)</code></pre>
@@ -436,6 +441,199 @@ manu %&gt;%
 </tr>
 </tbody>
 </table>
+<p>The first thing I notice is that the first row contains alternative, longer-form headers. I will choose to work with these longer-form headers, so I will read the data in again, but this time skipping the first row. I will also run the <code>janitor::clean_names()</code> function over the headers to make them cleaner for working with in R.</p>
+<pre class="r"><code># Read the raw manufacturing data into a df
+raw &lt;- read_csv(&quot;data-in/manufacturing_data.csv&quot;,
+                skip=1) %&gt;% 
+  clean_names()
+
+# Display the head
+raw %&gt;% 
+  head(5) %&gt;% 
+  kable(align = &quot;l&quot;,
+        caption = &quot;Head of the manufacturing dataset&quot;)</code></pre>
+<table>
+<caption>Head of the manufacturing dataset</caption>
+<colgroup>
+<col width="2%" />
+<col width="3%" />
+<col width="2%" />
+<col width="3%" />
+<col width="2%" />
+<col width="3%" />
+<col width="4%" />
+<col width="4%" />
+<col width="1%" />
+<col width="2%" />
+<col width="0%" />
+<col width="7%" />
+<col width="15%" />
+<col width="3%" />
+<col width="5%" />
+<col width="3%" />
+<col width="9%" />
+<col width="10%" />
+<col width="9%" />
+</colgroup>
+<thead>
+<tr class="header">
+<th align="left">id</th>
+<th align="left">geographic_area_name</th>
+<th align="left">geo_footnote</th>
+<th align="left">x2017_naics_code</th>
+<th align="left">industry_group</th>
+<th align="left">x2017_naics_footnote</th>
+<th align="left">meaning_of_naics_code</th>
+<th align="left">naics_economic_sector</th>
+<th align="left">subsector</th>
+<th align="left">industry_level</th>
+<th align="left">year</th>
+<th align="left">sales_value_of_shipments_or_revenue_1_000</th>
+<th align="left">relative_standard_error_for_estimate_of_sales_value_of_shipments_or_revenue_percent</th>
+<th align="left">annual_payroll_1_000</th>
+<th align="left">first_quarter_payroll_1_000</th>
+<th align="left">number_of_employees</th>
+<th align="left">production_workers_for_pay_period_including_march_12</th>
+<th align="left">range_indicating_percent_of_total_annual_payroll_imputed</th>
+<th align="left">range_indicating_percent_of_total_employees_imputed</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="left">0400000US01</td>
+<td align="left">Alabama</td>
+<td align="left">null</td>
+<td align="left">31-33</td>
+<td align="left">null</td>
+<td align="left">null</td>
+<td align="left">Manufacturing</td>
+<td align="left">31</td>
+<td align="left">null</td>
+<td align="left">2</td>
+<td align="left">2018</td>
+<td align="left">137578434</td>
+<td align="left">0.21</td>
+<td align="left">13356360</td>
+<td align="left">3319728</td>
+<td align="left">249562</td>
+<td align="left">190899</td>
+<td align="left">20% to less than 30%</td>
+<td align="left">30% to less than 40%</td>
+</tr>
+<tr class="even">
+<td align="left">0400000US01</td>
+<td align="left">Alabama</td>
+<td align="left">null</td>
+<td align="left">31-33</td>
+<td align="left">null</td>
+<td align="left">null</td>
+<td align="left">Manufacturing</td>
+<td align="left">31</td>
+<td align="left">null</td>
+<td align="left">2</td>
+<td align="left">2019</td>
+<td align="left">135383425</td>
+<td align="left">0.33</td>
+<td align="left">13920285</td>
+<td align="left">3422998</td>
+<td align="left">251083</td>
+<td align="left">191552</td>
+<td align="left">20% to less than 30%</td>
+<td align="left">30% to less than 40%</td>
+</tr>
+<tr class="odd">
+<td align="left">0400000US01</td>
+<td align="left">Alabama</td>
+<td align="left">null</td>
+<td align="left">311</td>
+<td align="left">null</td>
+<td align="left">null</td>
+<td align="left">Food manufacturing</td>
+<td align="left">31</td>
+<td align="left">311</td>
+<td align="left">3</td>
+<td align="left">2018</td>
+<td align="left">11712369</td>
+<td align="left">0.60</td>
+<td align="left">1057614</td>
+<td align="left">270682</td>
+<td align="left">30322</td>
+<td align="left">25840</td>
+<td align="left">30% to less than 40%</td>
+<td align="left">30% to less than 40%</td>
+</tr>
+<tr class="even">
+<td align="left">0400000US01</td>
+<td align="left">Alabama</td>
+<td align="left">null</td>
+<td align="left">311</td>
+<td align="left">null</td>
+<td align="left">null</td>
+<td align="left">Food manufacturing</td>
+<td align="left">31</td>
+<td align="left">311</td>
+<td align="left">3</td>
+<td align="left">2019</td>
+<td align="left">11867099</td>
+<td align="left">0.62</td>
+<td align="left">1162584</td>
+<td align="left">298981</td>
+<td align="left">33222</td>
+<td align="left">28311</td>
+<td align="left">30% to less than 40%</td>
+<td align="left">40% to less than 50%</td>
+</tr>
+<tr class="odd">
+<td align="left">0400000US01</td>
+<td align="left">Alabama</td>
+<td align="left">null</td>
+<td align="left">3111</td>
+<td align="left">3111</td>
+<td align="left">null</td>
+<td align="left">Animal food manufacturing</td>
+<td align="left">31</td>
+<td align="left">311</td>
+<td align="left">4</td>
+<td align="left">2018</td>
+<td align="left">1292176</td>
+<td align="left">1.80</td>
+<td align="left">65603</td>
+<td align="left">16091</td>
+<td align="left">1151</td>
+<td align="left">813</td>
+<td align="left">30% to less than 40%</td>
+<td align="left">40% to less than 50%</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div id="inspecting-the-data" class="section level1" number="5">
+<h1 number="5"><span class="header-section-number">5</span> Inspecting the Data</h1>
+<p>I will review each column in the raw data to get a sense of what is contains and how I might be able to build a model from it. I appreicate that this method of reviewing the data to determine a model is somewhat contrary to the Kimball techniques, which advise that I should determine the business requirements first and then obtain the data to match the requirements. However, in this case, I have no business users to consult and the model will be built according to my own analysis of the available data.</p>
+<div id="id" class="section level2" number="5.1">
+<h2 number="5.1"><span class="header-section-number">5.1</span> <code>id</code></h2>
+<pre class="r"><code># Show the head of the id column
+raw$id %&gt;% 
+  glimpse()</code></pre>
+<pre><code>##  chr [1:797] &quot;0400000US01&quot; &quot;0400000US01&quot; &quot;0400000US01&quot; &quot;0400000US01&quot; ...</code></pre>
+<p>This is a character column and the first 4 values are duplicates. What are the total values and value counts in this column?</p>
+<pre class="r"><code># Show the value counts for id
+table(raw$id)</code></pre>
+<pre><code>## 
+## 0400000US01 0400000US02 0400000US04 0400000US05 
+##         212         162         213         210</code></pre>
+<p>There are 4 values with around 200 records for each. By looking back at the source website, I discovered that <code>id</code> refers to the <em>geographic identifier code</em>, so I will rename this column to be more descriptive. Now that I am starting to manipulate the raw data, I will save this into a new variable <code>df</code>.</p>
+<pre class="r"><code># rename the id column
+df &lt;- raw %&gt;% 
+  rename(geographic_area_id = id)</code></pre>
+</div>
+<div id="geographic_area_name" class="section level2" number="5.2">
+<h2 number="5.2"><span class="header-section-number">5.2</span> <code>geographic_area_name</code></h2>
+<pre class="r"><code># Show the head of the geographic_area_name column
+df$geographic_area_name %&gt;% 
+  glimpse()</code></pre>
+<pre><code>##  chr [1:797] &quot;Alabama&quot; &quot;Alabama&quot; &quot;Alabama&quot; &quot;Alabama&quot; &quot;Alabama&quot; &quot;Alabama&quot; ...</code></pre>
+</div>
 </div>
 
 
